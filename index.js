@@ -1,11 +1,13 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import userRouter from './routes/user.route.js';
-import authRouter from './routes/auth.route.js';
-import cookieParser from 'cookie-parser';
-import listingRouter from './routes/listing.route.js';
-import cors from 'cors';
+
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+
+import authRouter from "./routes/auth.route.js";
+import userRouter from "./routes/user.route.js";
+import listingRouter from "./routes/listing.route.js";
 
 dotenv.config();
 
@@ -13,54 +15,42 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ Declare connection flag
-let isConnected = false;
-
-// ✅ Allow CORS for frontend origins
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://front-real.netlify.app'
+  "http://localhost:5173",
+  "https://estatefrontend.netlify.app"
 ];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
-// ✅ MongoDB connection middleware (for Vercel deployment)
-app.use((req, res, next) => {
-  if (!isConnected) {
-    connectToMongoDB();
-  }
-  next();
+// Routers
+app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
+app.use("/api/listing", listingRouter);
+
+// Health check
+app.get("/api/health", (req, res) => {
+  res.json({ success: true, message: "Backend + DB alive 🚀" });
 });
 
-// ✅ Routes
-app.use('/api/user', userRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/listing', listingRouter);
+// Root route
+app.get("/", (req, res) => res.send("Backend is running!"));
 
-// ✅ Health check route
-app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'Backend + DB alive 🚀' });
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Error:", err.message || err);
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
 });
 
-// ✅ Default route
-app.get('/', (req, res) => {
-  res.send('API is running...');
-});
+// DB connect
+await mongoose.connect(process.env.MONGO_URI);
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("MongoDB connected ✅"))
+.catch(err => console.error("MongoDB connection failed ❌", err));
 
-// ✅ Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
-
-// ✅ MongoDB connection function
-async function connectToMongoDB() {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    isConnected = true;
-    console.log('✅ MongoDB connected successfully');
-  } catch (error) {
-    console.error('❌ Error connecting to MongoDB:', error.message);
-  }
-}
-
+// 👇 IMPORTANT: export app (don’t call app.listen)
 export default app;
