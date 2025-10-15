@@ -44,7 +44,7 @@ app.use((err, req, res, next) => {
 });
 
 // DB connect
-await mongoose.connect(process.env.MONGO_URI);
+
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
