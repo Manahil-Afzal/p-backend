@@ -19,7 +19,7 @@ let isConnected = false;
 // ✅ Allow CORS for frontend origins
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://mern-sttk.netlify.app'
+  'https://front-real.netlify.app'
 ];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
